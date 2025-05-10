@@ -47,6 +47,10 @@ public:
     explicit Lexer (const std::string &path);
 
     const std::vector<Token> &scan ();
+
+    const std::string &name () const;
+
+    const std::string_view line (std::size_t num) const;
 };
 
 Lexer::Lexer (const std::string &path) : path(path) {
@@ -58,6 +62,18 @@ Lexer::Lexer (const std::string &path) : path(path) {
         panic("source file {} too large", path);
     }
 }
+
+const std::string &Lexer::name () const {
+    return path;
+}
+
+const std::string_view Lexer::line (std::size_t num) const {
+    if (num >= rows.size()) {
+        panic("Invalid line access {} in {}", num, path);
+    }
+    return rows[num];
+}
+
 
 bool Lexer::eof() const {
     return crs >= len;
@@ -230,6 +246,5 @@ void Lexer::lexical_error(const std::format_string<Args...> fmt, Args&&... args)
     
     term(msg);
 }
-
 
 }

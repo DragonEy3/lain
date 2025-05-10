@@ -12,6 +12,10 @@
 namespace lain {
 
 using uint = unsigned int;
+using std::size_t;
+
+template <typename T>
+using uptr = std::unique_ptr<T>;
 
 struct Ansi {
   static constexpr auto MagentaFB = "\033[35;1m"; // Magenta Foreground Bold

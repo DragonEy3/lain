@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "lexer.h"
+#include "stream.h"
+#include "expression.h"
 
 int main (int argc, char **argv) {
     if (argc != 2) {
@@ -9,13 +10,9 @@ int main (int argc, char **argv) {
 
     std::string path = argv[1];
 
-    auto lexer = lain::Lexer(path);
+    auto stream = lain::TokenStream(path);
 
-    auto &tokens = lexer.scan();
-
-    for (const auto &token : tokens) {
-        std::cout << lain::to_string(token.type) << std::endl;
-    }
+    lain::todo("Parsing");
 
     return 0;
 }

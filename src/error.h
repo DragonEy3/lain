@@ -56,4 +56,13 @@ void unexpected(error_format<std::type_identity_t<Args>...> fmt, Args&&... args)
     raise_error(Ansi::MagentaFB, "unexpected", fmt, std::forward<Args>(args)...);
 }
 
+const std::string error_location (const std::string &path, uint row, uint col) {
+    return std::format(
+        "{}{}:{}:{}:{}", 
+        Ansi::Bold, path,
+        row + 1, col + 1,
+        Ansi::Reset
+    );
+}
+
 }
