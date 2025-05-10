@@ -5,8 +5,10 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <span>
 
 #include "utils.h"
+#include "table.h"
 
 namespace lain {
 
@@ -67,98 +69,106 @@ namespace Category {
     };
 }
 
-constexpr auto reserved = array_make<std::pair<std::string_view, std::pair<Token::Type, uint32_t>>>({
-    {"unknown",     {Token::Unknown,    Category::None}},
+struct TokenInfo {
+    std::string_view str;
+    Token::Type type;
+    uint32_t categories;
+};
 
-    {"identifier",  {Token::Identifier, Category::Operand}},
-    {"eof",         {Token::Eof,        Category::None}},
+constexpr auto reserved = array_make<TokenInfo>({
+    {"unknown",     Token::Unknown,    Category::None},
+
+    {"identifier",  Token::Identifier, Category::Operand},
+    {"eof",         Token::Eof,        Category::None},
 
     // Keywords
-    {"var",         {Token::Var,        Category::Tokenizable | Category::Keyword}},
-    {"fun",         {Token::Fun,        Category::Tokenizable | Category::Keyword}},
-    {"enum",        {Token::Enum,       Category::Tokenizable | Category::Keyword}},
-    {"struct",      {Token::Struct,     Category::Tokenizable | Category::Keyword}},
-    {"return",      {Token::Return,     Category::Tokenizable | Category::Keyword}},
-    {"comp",        {Token::Comp,       Category::Tokenizable | Category::Keyword}},
-    {"for",         {Token::For,        Category::Tokenizable | Category::Keyword}},
-    {"continue",    {Token::Continue,   Category::Tokenizable | Category::Keyword}},
-    {"break",       {Token::Break,      Category::Tokenizable | Category::Keyword}},
-    {"if",          {Token::If,         Category::Tokenizable | Category::Keyword}},
-    {"else",        {Token::Else,       Category::Tokenizable | Category::Keyword}},
-    {"import",      {Token::Import,     Category::Tokenizable | Category::Keyword}},
-    {"module",      {Token::Module,     Category::Tokenizable | Category::Keyword}},
-    {"protected",   {Token::Protected,  Category::Tokenizable | Category::Keyword | Category::Modifier}},
-    {"private",     {Token::Private,    Category::Tokenizable | Category::Keyword | Category::Modifier}},
-    {"static",      {Token::Static,     Category::Tokenizable | Category::Keyword | Category::Modifier}},
-    {"const",       {Token::Const,      Category::Tokenizable | Category::Keyword | Category::Modifier}},
-    {"unique",      {Token::Unique,     Category::Tokenizable | Category::Keyword | Category::Modifier}},
-    {"unsafe",      {Token::Unsafe,     Category::Tokenizable | Category::Keyword | Category::Modifier}},
-    {"debug",       {Token::Debug,      Category::Tokenizable | Category::Keyword | Category::Modifier}},
+    {"var",         Token::Var,        Category::Tokenizable | Category::Keyword},
+    {"fun",         Token::Fun,        Category::Tokenizable | Category::Keyword},
+    {"enum",        Token::Enum,       Category::Tokenizable | Category::Keyword},
+    {"struct",      Token::Struct,     Category::Tokenizable | Category::Keyword},
+    {"return",      Token::Return,     Category::Tokenizable | Category::Keyword},
+    {"comp",        Token::Comp,       Category::Tokenizable | Category::Keyword},
+    {"for",         Token::For,        Category::Tokenizable | Category::Keyword},
+    {"continue",    Token::Continue,   Category::Tokenizable | Category::Keyword},
+    {"break",       Token::Break,      Category::Tokenizable | Category::Keyword},
+    {"if",          Token::If,         Category::Tokenizable | Category::Keyword},
+    {"else",        Token::Else,       Category::Tokenizable | Category::Keyword},
+    {"import",      Token::Import,     Category::Tokenizable | Category::Keyword},
+    {"module",      Token::Module,     Category::Tokenizable | Category::Keyword},
+    {"protected",   Token::Protected,  Category::Tokenizable | Category::Keyword | Category::Modifier},
+    {"private",     Token::Private,    Category::Tokenizable | Category::Keyword | Category::Modifier},
+    {"static",      Token::Static,     Category::Tokenizable | Category::Keyword | Category::Modifier},
+    {"const",       Token::Const,      Category::Tokenizable | Category::Keyword | Category::Modifier},
+    {"unique",      Token::Unique,     Category::Tokenizable | Category::Keyword | Category::Modifier},
+    {"unsafe",      Token::Unsafe,     Category::Tokenizable | Category::Keyword | Category::Modifier},
+    {"debug",       Token::Debug,      Category::Tokenizable | Category::Keyword | Category::Modifier},
 
     // Types
-    {"u8",   {Token::U8,   Category::Tokenizable | Category::Type}},
-    {"u16",  {Token::U16,  Category::Tokenizable | Category::Type}},
-    {"u32",  {Token::U32,  Category::Tokenizable | Category::Type}},
-    {"u64",  {Token::U64,  Category::Tokenizable | Category::Type}},
-    {"uint", {Token::UInt, Category::Tokenizable | Category::Type}},
-    {"i8",   {Token::I8,   Category::Tokenizable | Category::Type}},
-    {"i16",  {Token::I16,  Category::Tokenizable | Category::Type}},
-    {"i32",  {Token::I32,  Category::Tokenizable | Category::Type}},
-    {"i64",  {Token::I64,  Category::Tokenizable | Category::Type}},
-    {"int",  {Token::Int,  Category::Tokenizable | Category::Type}},
-    {"void", {Token::Void, Category::Tokenizable | Category::Type}},
+    {"u8",   Token::U8,   Category::Tokenizable | Category::Type},
+    {"u16",  Token::U16,  Category::Tokenizable | Category::Type},
+    {"u32",  Token::U32,  Category::Tokenizable | Category::Type},
+    {"u64",  Token::U64,  Category::Tokenizable | Category::Type},
+    {"uint", Token::UInt, Category::Tokenizable | Category::Type},
+    {"i8",   Token::I8,   Category::Tokenizable | Category::Type},
+    {"i16",  Token::I16,  Category::Tokenizable | Category::Type},
+    {"i32",  Token::I32,  Category::Tokenizable | Category::Type},
+    {"i64",  Token::I64,  Category::Tokenizable | Category::Type},
+    {"int",  Token::Int,  Category::Tokenizable | Category::Type},
+    {"void", Token::Void, Category::Tokenizable | Category::Type},
 
     // Separators
-    {"(",    {Token::LParen,    Category::Tokenizable | Category::Separator}},
-    {")",    {Token::RParen,    Category::Tokenizable | Category::Separator}},
-    {"{",    {Token::LBrace,    Category::Tokenizable | Category::Separator}},
-    {"}",    {Token::RBrace,    Category::Tokenizable | Category::Separator}},
-    {"[",    {Token::LBracket,  Category::Tokenizable | Category::Separator}},
-    {"]",    {Token::RBracket,  Category::Tokenizable | Category::Separator}},
-    {":",    {Token::Colon,     Category::Tokenizable | Category::Separator}},
-    {";",    {Token::Semi,      Category::Tokenizable | Category::Separator}},
-    {",",    {Token::Comma,     Category::Tokenizable | Category::Separator | Category::Operator}},
-    {".",    {Token::Dot,       Category::Tokenizable | Category::Separator | Category::Operator}},
+    {"(",    Token::LParen,    Category::Tokenizable | Category::Separator},
+    {")",    Token::RParen,    Category::Tokenizable | Category::Separator},
+    {"{",    Token::LBrace,    Category::Tokenizable | Category::Separator},
+    {"}",    Token::RBrace,    Category::Tokenizable | Category::Separator},
+    {"[",    Token::LBracket,  Category::Tokenizable | Category::Separator},
+    {"]",    Token::RBracket,  Category::Tokenizable | Category::Separator},
+    {":",    Token::Colon,     Category::Tokenizable | Category::Separator},
+    {";",    Token::Semi,      Category::Tokenizable | Category::Separator},
+    {",",    Token::Comma,     Category::Tokenizable | Category::Separator | Category::Operator},
+    {".",    Token::Dot,       Category::Tokenizable | Category::Separator | Category::Operator},
     
     // Operators
-    {"+",  {Token::Add,         Category::Tokenizable | Category::Operator}},
-    {"-",  {Token::Sub,         Category::Tokenizable | Category::Operator}},
-    {"=",  {Token::Assign,      Category::Tokenizable | Category::Operator}},
-    {"*",  {Token::Mul,         Category::Tokenizable | Category::Operator}},
-    {"/",  {Token::Div,         Category::Tokenizable | Category::Operator}},
-    {"++", {Token::Increment,   Category::Tokenizable | Category::Operator}},
-    {"+=", {Token::AddEq,       Category::Tokenizable | Category::Operator}},
-    {"-=", {Token::SubEq,       Category::Tokenizable | Category::Operator}},
-    {"*=", {Token::MulEq,       Category::Tokenizable | Category::Operator}},
-    {"/=", {Token::DivEq,       Category::Tokenizable | Category::Operator}},
-    {"==", {Token::Equals,      Category::Tokenizable | Category::Operator}},
-    {"<",  {Token::Lesser,      Category::Tokenizable | Category::Operator}},
-    {">",  {Token::Greater,     Category::Tokenizable | Category::Operator}},
-    {"<=", {Token::LessEq,      Category::Tokenizable | Category::Operator}},
-    {">=", {Token::GreatEq,     Category::Tokenizable | Category::Operator}},
-    {"||", {Token::LogOr,       Category::Tokenizable | Category::Operator}},
-    {"&&", {Token::LogAnd,      Category::Tokenizable | Category::Operator}},
-    {"!",  {Token::LogNot,      Category::Tokenizable | Category::Operator}},
-    {"|",  {Token::VBar,        Category::Tokenizable | Category::Operator}},
-    {"^",  {Token::Caret,       Category::Tokenizable | Category::Operator}},
-    {"&",  {Token::Ampersand,   Category::Tokenizable | Category::Operator}},
-    {"~",  {Token::Tilde,       Category::Tokenizable | Category::Operator}},
+    {"+",  Token::Add,         Category::Tokenizable | Category::Operator},
+    {"-",  Token::Sub,         Category::Tokenizable | Category::Operator},
+    {"=",  Token::Assign,      Category::Tokenizable | Category::Operator},
+    {"*",  Token::Mul,         Category::Tokenizable | Category::Operator},
+    {"/",  Token::Div,         Category::Tokenizable | Category::Operator},
+    {"++", Token::Increment,   Category::Tokenizable | Category::Operator},
+    {"+=", Token::AddEq,       Category::Tokenizable | Category::Operator},
+    {"-=", Token::SubEq,       Category::Tokenizable | Category::Operator},
+    {"*=", Token::MulEq,       Category::Tokenizable | Category::Operator},
+    {"/=", Token::DivEq,       Category::Tokenizable | Category::Operator},
+    {"==", Token::Equals,      Category::Tokenizable | Category::Operator},
+    {"<",  Token::Lesser,      Category::Tokenizable | Category::Operator},
+    {">",  Token::Greater,     Category::Tokenizable | Category::Operator},
+    {"<=", Token::LessEq,      Category::Tokenizable | Category::Operator},
+    {">=", Token::GreatEq,     Category::Tokenizable | Category::Operator},
+    {"||", Token::LogOr,       Category::Tokenizable | Category::Operator},
+    {"&&", Token::LogAnd,      Category::Tokenizable | Category::Operator},
+    {"!",  Token::LogNot,      Category::Tokenizable | Category::Operator},
+    {"|",  Token::VBar,        Category::Tokenizable | Category::Operator},
+    {"^",  Token::Caret,       Category::Tokenizable | Category::Operator},
+    {"&",  Token::Ampersand,   Category::Tokenizable | Category::Operator},
+    {"~",  Token::Tilde,       Category::Tokenizable | Category::Operator},
     
-    {"string",      {Token::String,     Category::Literal | Category::Operand}},
-    {"integer",     {Token::Integer,    Category::Literal | Category::Operand}},
-    {"character",   {Token::Character,  Category::Literal | Category::Operand}},
-    {"ipv4",        {Token::Ipv4,       Category::Literal | Category::Operand}},
-    {"color",       {Token::Color,      Category::Literal | Category::Operand}},
+    {"string",      Token::String,     Category::Literal | Category::Operand},
+    {"integer",     Token::Integer,    Category::Literal | Category::Operand},
+    {"character",   Token::Character,  Category::Literal | Category::Operand},
+    {"ipv4",        Token::Ipv4,       Category::Literal | Category::Operand},
+    {"color",       Token::Color,      Category::Literal | Category::Operand},
 });
+
+static constexpr auto MaxLen = max_len(extract_key(reserved, &TokenInfo::str));
 
 const auto tokenize (const char *src) {
     uint pos = 0, max = 0;
     for (uint i = 1; i < reserved.size(); i++) {
         auto &entry = reserved[i];
-        if (!(entry.second.second & Category::Tokenizable)) {
+        if (!(entry.categories & Category::Tokenizable)) {
             continue;
         }
-        const auto &str = entry.first;
+        const auto &str = entry.str;
         if (max > str.size()) {
             continue;
         }
@@ -171,19 +181,23 @@ const auto tokenize (const char *src) {
 }
 
 const auto check_type (const std::string &str) {
-    static const auto map = std::unordered_map(reserved.begin(), reserved.end());
+    static constexpr auto table = extract_pair(reserved, &TokenInfo::str, &TokenInfo::type);
+    static const auto map = std::unordered_map(table.begin(), table.end());
+    if (str.size() > MaxLen) {
+        return Token::Type::Unknown;
+    }
     auto it = map.find(str);
     if (it == map.end()) {
-        return Token::Unknown;
+        return Token::Type::Unknown;
     }
-    return it->second.first;
+    return it->second;
 }
 
 uint32_t categorize (const Token::Type type) {
     static const auto map = []{
         std::unordered_map<Token::Type, uint32_t> m;
         for (const auto &entry: reserved) {
-            m.emplace(entry.second);
+            m.emplace(entry.type, entry.categories);
         }
         return m;
     }();
@@ -195,12 +209,13 @@ uint32_t categorize (const Token::Type type) {
 }
 
 constexpr std::string_view to_string (const Token::Type type) {
-    for (const auto& reserved: reserved) {
-        if (reserved.second.first == type) {
-            return reserved.first;
-        }
+    static constexpr auto table = extract_pair(reserved, &TokenInfo::type, &TokenInfo::str);
+    static const auto map = std::unordered_map(table.begin(), table.end());
+    auto it = map.find(type);
+    if (it == map.end()) {
+        return reserved[0].str;
     }
-    return reserved[0].first;
+    return it->second;
 }
 
 }

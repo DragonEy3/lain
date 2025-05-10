@@ -180,12 +180,12 @@ void Lexer::scanString(Token &token) {
 void Lexer::scanSymbol(Token &token) {
     auto res = tokenize(src.get() + crs);
 
-    if (res.second.first == Token::Unknown) {
+    if (res.type == Token::Unknown) {
         lexical_error("unexpected character {}", peek());
     }
 
-    token.len = res.first.size();
-    token.type = res.second.first;
+    token.len = res.str.size();
+    token.type = res.type;
 
     crs += token.len;
     col += token.len;

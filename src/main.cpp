@@ -12,6 +12,10 @@ int main (int argc, char **argv) {
 
     auto stream = lain::TokenStream(path);
 
+    while (!stream.done()) {
+        std::cout << lain::to_string(stream.bump().type) << std::endl;
+    }
+
     lain::todo("Parsing");
 
     return 0;
